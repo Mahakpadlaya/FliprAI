@@ -102,6 +102,8 @@ def get_project(project_id):
 @app.route('/api/projects', methods=['POST'])
 def create_project():
     try:
+        if not projects_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         if not data:
             return jsonify({'error': 'Invalid request'}), 400
@@ -136,6 +138,8 @@ def create_project():
 @app.route('/api/projects/<project_id>', methods=['PUT'])
 def update_project(project_id):
     try:
+        if not projects_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         project = projects_collection.find_one({'_id': ObjectId(project_id)})
         if not project:
             return jsonify({'error': 'Project not found'}), 404
@@ -166,6 +170,8 @@ def update_project(project_id):
 @app.route('/api/projects/<project_id>', methods=['DELETE'])
 def delete_project(project_id):
     try:
+        if not projects_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         result = projects_collection.delete_one({'_id': ObjectId(project_id)})
         if result.deleted_count == 0:
             return jsonify({'error': 'Project not found'}), 404
@@ -202,6 +208,8 @@ def get_client(client_id):
 @app.route('/api/clients', methods=['POST'])
 def create_client():
     try:
+        if not clients_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         if not data:
             return jsonify({'error': 'Invalid request'}), 400
@@ -238,6 +246,8 @@ def create_client():
 @app.route('/api/clients/<client_id>', methods=['PUT'])
 def update_client(client_id):
     try:
+        if not clients_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         client = clients_collection.find_one({'_id': ObjectId(client_id)})
         if not client:
             return jsonify({'error': 'Client not found'}), 404
@@ -270,6 +280,8 @@ def update_client(client_id):
 @app.route('/api/clients/<client_id>', methods=['DELETE'])
 def delete_client(client_id):
     try:
+        if not clients_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         result = clients_collection.delete_one({'_id': ObjectId(client_id)})
         if result.deleted_count == 0:
             return jsonify({'error': 'Client not found'}), 404
@@ -281,6 +293,8 @@ def delete_client(client_id):
 @app.route('/api/contacts', methods=['POST'])
 def create_contact():
     try:
+        if not contacts_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         name = data.get('name')
         email = data.get('email')
@@ -318,6 +332,8 @@ def get_contacts():
 @app.route('/api/contacts/<contact_id>', methods=['DELETE'])
 def delete_contact(contact_id):
     try:
+        if not contacts_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         result = contacts_collection.delete_one({'_id': ObjectId(contact_id)})
         if result.deleted_count == 0:
             return jsonify({'error': 'Contact not found'}), 404
@@ -329,6 +345,8 @@ def delete_contact(contact_id):
 @app.route('/api/newsletters', methods=['POST'])
 def subscribe_newsletter():
     try:
+        if not newsletters_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         email = data.get('email')
         
@@ -364,6 +382,8 @@ def get_newsletters():
 @app.route('/api/newsletters/<newsletter_id>', methods=['DELETE'])
 def delete_newsletter(newsletter_id):
     try:
+        if not newsletters_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         result = newsletters_collection.delete_one({'_id': ObjectId(newsletter_id)})
         if result.deleted_count == 0:
             return jsonify({'error': 'Subscriber not found'}), 404
