@@ -15,15 +15,26 @@ CORS(app)
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 DB_NAME = os.getenv('DB_NAME', 'fullstack-task')
 
+# Initialize collections as None - will be set if connection succeeds
+projects_collection = None
+clients_collection = None
+contacts_collection = None
+newsletters_collection = None
+
 try:
-    client = MongoClient(MONGODB_URI)
-    db = client[DB_NAME]
-    projects_collection = db['projects']
-    clients_collection = db['clients']
-    contacts_collection = db['contacts']
-    newsletters_collection = db['newsletters']
+    if MONGODB_URI and MONGODB_URI != 'mongodb://localhost:27017/':
+        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        db = client[DB_NAME]
+        projects_collection = db['projects']
+        clients_collection = db['clients']
+        contacts_collection = db['contacts']
+        newsletters_collection = db['newsletters']
+        print("MongoDB connected successfully")
+    else:
+        print("Warning: MONGODB_URI not set or using default")
 except Exception as e:
     print(f"MongoDB connection error: {e}")
+    # Collections remain None - routes will handle this gracefully
 
 def jsonify_mongo(data):
     if isinstance(data, list):
@@ -330,4 +341,6 @@ def delete_newsletter(newsletter_id):
         return jsonify({'error': str(e)}), 500
 
 # Export handler for Vercel
+# Vercel Python runtime automatically wraps Flask apps
+# Simply export the app - Vercel handles the rest
 handler = app
