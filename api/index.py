@@ -53,18 +53,25 @@ def get_db_connection():
         
         print(f"Attempting to connect to MongoDB...")
         print(f"MONGODB_URI exists: {bool(MONGODB_URI)}")
+        print(f"DB_NAME: {DB_NAME}")
         
-        # For MongoDB Atlas, the connection string should already have all options
-        # Just connect directly - MongoDB Atlas URIs are self-contained
-        _client = MongoClient(
-            MONGODB_URI,
-            serverSelectionTimeoutMS=15000,  # Increased timeout
-            connectTimeoutMS=15000,
-            socketTimeoutMS=15000,
-            retryWrites=True,
-            tls=True,
-            tlsAllowInvalidCertificates=False
-        )
+        # For MongoDB Atlas, ensure connection string includes database name
+        # If URI doesn't have database, append it
+        uri = MONGODB_URI
+        if f'/{DB_NAME}' not in uri and f'/{DB_NAME}?' not in uri:
+            # Add database name to URI
+            if uri.endswith('/'):
+                uri = uri[:-1]
+            if '?' in uri:
+                # Insert database name before query string
+                uri = uri.replace('?', f'/{DB_NAME}?')
+            else:
+                uri = f"{uri}/{DB_NAME}"
+        
+        # For serverless (Vercel), use minimal connection settings
+        # MongoDB Atlas URIs with mongodb+srv:// already include TLS by default
+        # Just use the connection string as-is, similar to local backend
+        _client = MongoClient(uri)
         
         # Test connection with ping
         print("Testing MongoDB connection...")
