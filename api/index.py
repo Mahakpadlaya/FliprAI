@@ -90,6 +90,8 @@ def get_projects():
 @app.route('/api/projects/<project_id>', methods=['GET'])
 def get_project(project_id):
     try:
+        if not projects_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         project = projects_collection.find_one({'_id': ObjectId(project_id)})
         if not project:
             return jsonify({'error': 'Project not found'}), 404
@@ -175,14 +177,21 @@ def delete_project(project_id):
 @app.route('/api/clients', methods=['GET'])
 def get_clients():
     try:
+        if not clients_collection:
+            return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         clients = list(clients_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(clients))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in get_clients: {e}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': str(e), 'type': 'database_error'}), 500
 
 @app.route('/api/clients/<client_id>', methods=['GET'])
 def get_client(client_id):
     try:
+        if not clients_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         client = clients_collection.find_one({'_id': ObjectId(client_id)})
         if not client:
             return jsonify({'error': 'Client not found'}), 404
@@ -298,10 +307,13 @@ def create_contact():
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
     try:
+        if not contacts_collection:
+            return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         contacts = list(contacts_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(contacts))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in get_contacts: {e}")
+        return jsonify({'error': str(e), 'type': 'database_error'}), 500
 
 @app.route('/api/contacts/<contact_id>', methods=['DELETE'])
 def delete_contact(contact_id):
@@ -341,10 +353,13 @@ def subscribe_newsletter():
 @app.route('/api/newsletters', methods=['GET'])
 def get_newsletters():
     try:
+        if not newsletters_collection:
+            return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         newsletters = list(newsletters_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(newsletters))
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in get_newsletters: {e}")
+        return jsonify({'error': str(e), 'type': 'database_error'}), 500
 
 @app.route('/api/newsletters/<newsletter_id>', methods=['DELETE'])
 def delete_newsletter(newsletter_id):

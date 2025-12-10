@@ -13,7 +13,25 @@ async function apiCall(endpoint, options = {}) {
             }
         });
         
-        const data = await response.json();
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // If not JSON, try to get text and parse
+            const text = await response.text();
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                // If parsing fails, return error object
+                data = { 
+                    error: `Server returned non-JSON response: ${text.substring(0, 100)}`,
+                    status: response.status
+                };
+            }
+        }
         
         if (!response.ok) {
             throw new Error(data.error || 'Something went wrong');
