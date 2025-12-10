@@ -95,13 +95,15 @@ def health_check():
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
     try:
-        if not projects_collection:
-            return jsonify({'error': 'Database not connected'}), 500
+        if not get_db_connection():
+            return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         projects = list(projects_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(projects))
     except Exception as e:
         print(f"Error in get_projects: {e}")
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': str(e), 'type': 'database_error'}), 500
 
 @app.route('/api/projects/<project_id>', methods=['GET'])
 def get_project(project_id):
