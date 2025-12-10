@@ -11,6 +11,22 @@ import io
 app = Flask(__name__)
 CORS(app)
 
+# Global error handler to ensure all errors return JSON
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all exceptions and return JSON instead of HTML"""
+    return jsonify({'error': str(e), 'type': type(e).__name__}), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    """Handle 404 errors"""
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    """Handle 500 errors"""
+    return jsonify({'error': 'Internal server error'}), 500
+
 # MongoDB Connection
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 DB_NAME = os.getenv('DB_NAME', 'fullstack-task')
