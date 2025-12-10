@@ -6,17 +6,11 @@
       "use": "@vercel/python"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "api/index.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
-    }
-  ],
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
     {
       "source": "/",
       "destination": "/frontend/index.html"
@@ -24,6 +18,10 @@
     {
       "source": "/admin.html",
       "destination": "/frontend/admin.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
     }
   ]
 }
