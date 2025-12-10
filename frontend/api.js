@@ -1,5 +1,7 @@
-// API Configuration
-const API_URL = 'http://localhost:5000/api';
+// API Configuration - Works for both local development and Vercel deployment
+const API_URL = window.location.origin.includes('vercel.app') || window.location.origin.includes('localhost') === false
+    ? '/api'  // Use relative URL for production (Vercel)
+    : 'http://localhost:5000/api';  // Use localhost for development
 
 // Helper function for API calls
 async function apiCall(endpoint, options = {}) {
@@ -24,30 +26,88 @@ async function apiCall(endpoint, options = {}) {
     }
 }
 
+// Helper function to convert FormData to JSON with base64 images
+async function formDataToJson(formData) {
+    const isVercel = window.location.origin.includes('vercel.app') || !window.location.origin.includes('localhost');
+    
+    if (!isVercel) {
+        // For local development, return FormData as-is
+        return formData;
+    }
+    
+    // For Vercel, convert to JSON with base64 images
+    const json = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+            // Convert file to base64
+            const base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(value);
+            });
+            json[key] = base64;
+        } else {
+            json[key] = value;
+        }
+    }
+    
+    return JSON.stringify(json);
+}
+
 // Projects API
 export const getProjects = () => apiCall('/projects');
-export const createProject = (formData) => apiCall('/projects', {
-    method: 'POST',
-    body: formData
-});
-export const updateProject = (id, formData) => apiCall(`/projects/${id}`, {
-    method: 'PUT',
-    body: formData
-});
+export const createProject = async (formData) => {
+    const isVercel = window.location.origin.includes('vercel.app') || !window.location.origin.includes('localhost');
+    const body = isVercel ? await formDataToJson(formData) : formData;
+    const headers = isVercel ? { 'Content-Type': 'application/json' } : {};
+    
+    return apiCall('/projects', {
+        method: 'POST',
+        headers,
+        body
+    });
+};
+export const updateProject = async (id, formData) => {
+    const isVercel = window.location.origin.includes('vercel.app') || !window.location.origin.includes('localhost');
+    const body = isVercel ? await formDataToJson(formData) : formData;
+    const headers = isVercel ? { 'Content-Type': 'application/json' } : {};
+    
+    return apiCall(`/projects/${id}`, {
+        method: 'PUT',
+        headers,
+        body
+    });
+};
 export const deleteProject = (id) => apiCall(`/projects/${id}`, {
     method: 'DELETE'
 });
 
 // Clients API
 export const getClients = () => apiCall('/clients');
-export const createClient = (formData) => apiCall('/clients', {
-    method: 'POST',
-    body: formData
-});
-export const updateClient = (id, formData) => apiCall(`/clients/${id}`, {
-    method: 'PUT',
-    body: formData
-});
+export const createClient = async (formData) => {
+    const isVercel = window.location.origin.includes('vercel.app') || !window.location.origin.includes('localhost');
+    const body = isVercel ? await formDataToJson(formData) : formData;
+    const headers = isVercel ? { 'Content-Type': 'application/json' } : {};
+    
+    return apiCall('/clients', {
+        method: 'POST',
+        headers,
+        body
+    });
+};
+export const updateClient = async (id, formData) => {
+    const isVercel = window.location.origin.includes('vercel.app') || !window.location.origin.includes('localhost');
+    const body = isVercel ? await formDataToJson(formData) : formData;
+    const headers = isVercel ? { 'Content-Type': 'application/json' } : {};
+    
+    return apiCall(`/clients/${id}`, {
+        method: 'PUT',
+        headers,
+        body
+    });
+};
 export const deleteClient = (id) => apiCall(`/clients/${id}`, {
     method: 'DELETE'
 });

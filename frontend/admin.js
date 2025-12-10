@@ -5,7 +5,10 @@ import {
     getSubscribers, deleteSubscriber
 } from './api.js';
 
-const API_URL = 'http://localhost:5000';
+// API URL - Works for both local development and Vercel deployment
+const API_URL = window.location.origin.includes('vercel.app') || window.location.origin.includes('localhost') === false
+    ? ''  // Use relative URL for production (Vercel)
+    : 'http://localhost:5000';  // Use localhost for development
 let editingProjectId = null;
 let editingClientId = null;
 
