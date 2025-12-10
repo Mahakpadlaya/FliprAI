@@ -43,15 +43,21 @@ def jsonify_mongo(data):
 # Health check
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'OK', 'message': 'Server is running'})
+    try:
+        return jsonify({'status': 'OK', 'message': 'Server is running'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-# Projects routes
+# Projects routes  
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
     try:
+        if not projects_collection:
+            return jsonify({'error': 'Database not connected'}), 500
         projects = list(projects_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(projects))
     except Exception as e:
+        print(f"Error in get_projects: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/projects/<project_id>', methods=['GET'])
