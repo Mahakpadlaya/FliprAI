@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 # MongoDB Connection
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://senrishabhdevpy_db_user:fYZnlmqpQWqUbK3o@flipkr.spwmyya.mongodb.net/?appName=Flipkr')
 DB_NAME = os.getenv('DB_NAME', 'fullstack-task')
 client = MongoClient(MONGODB_URI)
 db = client[DB_NAME]

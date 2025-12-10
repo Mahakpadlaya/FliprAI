@@ -4,7 +4,6 @@ from pymongo import MongoClient
 from bson import ObjectId
 import os
 from datetime import datetime
-import tempfile
 from PIL import Image
 import base64
 import io
@@ -74,17 +73,14 @@ def create_project():
         
         name = data.get('name')
         description = data.get('description')
-        image_data = data.get('image')  # Base64 encoded image
+        image_data = data.get('image')
         
         if not all([name, description, image_data]):
             return jsonify({'error': 'Name, description, and image are required'}), 400
         
-        # Decode base64 image and process
         image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
         img = Image.open(io.BytesIO(image_bytes))
         img = img.resize((450, 350), Image.Resampling.LANCZOS)
-        
-        # Convert to base64 for storage (in production, use S3/Cloudinary)
         buffered = io.BytesIO()
         img.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
@@ -176,7 +172,6 @@ def create_client():
         if not all([name, description, designation, image_data]):
             return jsonify({'error': 'All fields are required'}), 400
         
-        # Process image
         image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
         img = Image.open(io.BytesIO(image_bytes))
         img = img.resize((150, 150), Image.Resampling.LANCZOS)
@@ -328,67 +323,6 @@ def delete_newsletter(newsletter_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Export handler for Vercel serverless functions
-# Vercel Python runtime expects a handler function
-def handler(request):
-    """
-    Vercel serverless function handler.
-    request: Vercel request object with method, path, headers, body, etc.
-    Returns: Vercel response dict with statusCode, headers, body
-    """
-    # Extract request details
-    method = request.method if hasattr(request, 'method') else request.get('method', 'GET')
-    path = request.path if hasattr(request, 'path') else request.get('path', '/')
-    
-    # Convert Vercel request to WSGI environ format
-    environ = {
-        'REQUEST_METHOD': method,
-        'PATH_INFO': path,
-        'QUERY_STRING': '',
-        'CONTENT_TYPE': request.headers.get('Content-Type', '') if hasattr(request, 'headers') else '',
-        'wsgi.version': (1, 0),
-        'wsgi.url_scheme': 'https',
-        'wsgi.input': None,
-    }
-    
-    # Add request body if present
-    if hasattr(request, 'body') and request.body:
-        if isinstance(request.body, str):
-            environ['wsgi.input'] = io.BytesIO(request.body.encode())
-        else:
-            environ['wsgi.input'] = io.BytesIO(request.body)
-        environ['CONTENT_LENGTH'] = str(len(request.body) if isinstance(request.body, str) else len(request.body))
-    
-    # Add headers to environ
-    headers = request.headers if hasattr(request, 'headers') else request.get('headers', {})
-    for key, value in headers.items():
-        environ_key = f'HTTP_{key.upper().replace("-", "_")}'
-        environ[environ_key] = value
-    
-    # WSGI response variables
-    response_status = [None]
-    response_headers = []
-    
-    def start_response(status, headers):
-        response_status[0] = status
-        response_headers.extend(headers)
-    
-    # Call Flask app
-    try:
-        response_body_iter = app(environ, start_response)
-        response_body = b''.join(response_body_iter) if response_body_iter else b''
-        
-        status_code = int(response_status[0].split()[0]) if response_status[0] else 200
-        
-        return {
-            'statusCode': status_code,
-            'headers': dict(response_headers),
-            'body': response_body.decode('utf-8') if isinstance(response_body, bytes) else str(response_body)
-        }
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
-            'body': jsonify({'error': str(e)}).get_data(as_text=True)
-        }
-
+# Export app for Vercel - this is what Vercel Python runtime expects
+# Vercel automatically wraps Flask apps
+handler = app
