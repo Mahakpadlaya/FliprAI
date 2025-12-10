@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="admin-panel">
+        <div class="admin-header">
+            <h1>Mahak Padlaya's Admin Panel</h1>
+            <a href="index.html" class="view-site-btn">View Site</a>
+        </div>
+        
+        <div class="admin-tabs">
+            <button class="tab-button active" data-tab="projects">Projects</button>
+            <button class="tab-button" data-tab="clients">Clients</button>
+            <button class="tab-button" data-tab="contacts">Contact Forms</button>
+            <button class="tab-button" data-tab="newsletters">Newsletters</button>
+        </div>
+
+        <div class="admin-content">
+            <!-- Projects Tab -->
+            <div id="projects-tab" class="tab-content active">
+                <div class="management-header">
+                    <h2>Project Management</h2>
+                    <button id="add-project-btn" class="add-button">+ Add Project</button>
+                </div>
+                
+                <form id="project-form" class="management-form" style="display: none;">
+                    <div class="form-group">
+                        <label>Project Name *</label>
+                        <input type="text" id="project-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea id="project-description" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Project Image *</label>
+                        <input type="file" id="project-image" accept="image/*" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-button">Create Project</button>
+                        <button type="button" id="cancel-project-btn" class="cancel-button">Cancel</button>
+                    </div>
+                </form>
+
+                <div id="projects-list" class="items-grid">
+                    <p class="loading">Loading projects...</p>
+                </div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div id="clients-tab" class="tab-content">
+                <div class="management-header">
+                    <h2>Client Management</h2>
+                    <button id="add-client-btn" class="add-button">+ Add Client</button>
+                </div>
+                
+                <form id="client-form" class="management-form" style="display: none;">
+                    <div class="form-group">
+                        <label>Client Name *</label>
+                        <input type="text" id="client-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea id="client-description" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Designation *</label>
+                        <input type="text" id="client-designation" placeholder="e.g., CEO, Web Developer" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Image *</label>
+                        <input type="file" id="client-image" accept="image/*" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-button">Create Client</button>
+                        <button type="button" id="cancel-client-btn" class="cancel-button">Cancel</button>
+                    </div>
+                </form>
+
+                <div id="clients-list" class="items-grid">
+                    <p class="loading">Loading clients...</p>
+                </div>
+            </div>
+
+            <!-- Contacts Tab -->
+            <div id="contacts-tab" class="tab-content">
+                <div class="management-header">
+                    <h2>Contact Form Submissions</h2>
+                </div>
+                <div id="contacts-list" class="contacts-table">
+                    <p class="loading">Loading contacts...</p>
+                </div>
+            </div>
+
+            <!-- Newsletters Tab -->
+            <div id="newsletters-tab" class="tab-content">
+                <div class="management-header">
+                    <h2>Newsletter Subscribers</h2>
+                </div>
+                <div id="newsletters-list" class="newsletters-table">
+                    <p class="loading">Loading subscribers...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
+

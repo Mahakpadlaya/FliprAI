@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "public": false,
   "builds": [
     {
       "src": "api/index.py",
@@ -14,20 +13,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/$1",
-      "headers": {
-        "Cache-Control": "public, max-age=3600"
-      }
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/frontend/index.html"
-    },
-    {
-      "source": "/admin.html",
-      "destination": "/frontend/admin.html"
+      "dest": "/$1"
     }
   ]
 }
