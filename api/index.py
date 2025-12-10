@@ -8,7 +8,11 @@ from PIL import Image
 import base64
 import io
 
-app = Flask(__name__, static_folder='../public', static_url_path='')
+# Get the directory where this file is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PUBLIC_DIR = os.path.join(BASE_DIR, '..', 'public')
+
+app = Flask(__name__)
 CORS(app)
 
 # MongoDB Connection
@@ -326,7 +330,13 @@ def delete_newsletter(newsletter_id):
 # Serve static files
 @app.route('/')
 def index():
-    return send_file('../public/index.html')
+    try:
+        index_path = os.path.join(PUBLIC_DIR, 'index.html')
+        if os.path.exists(index_path):
+            return send_file(index_path)
+        return jsonify({'error': 'index.html not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/<path:path>')
 def serve_static(path):
@@ -336,12 +346,17 @@ def serve_static(path):
     
     # Try to serve file from public folder
     try:
-        if os.path.exists(f'../public/{path}'):
-            return send_from_directory('../public', path)
-        # If file not found, try index.html for SPA routing
-        return send_file('../public/index.html')
+        file_path = os.path.join(PUBLIC_DIR, path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return send_from_directory(PUBLIC_DIR, path)
+        # If file not found and it's a directory or doesn't exist, try index.html
+        if '.' not in path or not os.path.exists(file_path):
+            index_path = os.path.join(PUBLIC_DIR, 'index.html')
+            if os.path.exists(index_path):
+                return send_file(index_path)
+        return jsonify({'error': 'File not found'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}), 404
+        return jsonify({'error': str(e)}), 500
 
 # Export app for Vercel - this is what Vercel Python runtime expects
 # Vercel automatically wraps Flask apps
