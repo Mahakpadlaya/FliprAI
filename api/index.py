@@ -49,15 +49,50 @@ def get_db_connection():
         if not MONGODB_URI or MONGODB_URI == '':
             return False
         
-        _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
+        # Fix MongoDB URI to ensure proper SSL/TLS connection
+        # Add retryWrites and other connection options if not present
+        uri = MONGODB_URI
+        if '?' not in uri:
+            uri += '?'
+        else:
+            uri += '&'
+        
+        # Add connection options if not already present
+        if 'retryWrites' not in uri:
+            uri += 'retryWrites=true&'
+        if 'w' not in uri:
+            uri += 'w=majority&'
+        if 'tls' not in uri.lower() and 'ssl' not in uri.lower():
+            uri += 'tls=true&'
+        
+        # Remove trailing & or ?
+        uri = uri.rstrip('&?')
+        
+        # Connect with proper SSL/TLS settings
+        _client = MongoClient(
+            uri,
+            serverSelectionTimeoutMS=10000,
+            connectTimeoutMS=10000,
+            socketTimeoutMS=10000,
+            tlsAllowInvalidCertificates=False,
+            retryWrites=True
+        )
+        
+        # Test connection
+        _client.admin.command('ping')
+        
         db = _client[DB_NAME]
         projects_collection = db['projects']
         clients_collection = db['clients']
         contacts_collection = db['contacts']
         newsletters_collection = db['newsletters']
+        
+        print("MongoDB connected successfully")
         return True
     except Exception as e:
         print(f"MongoDB connection error: {e}")
+        import traceback
+        print(traceback.format_exc())
         return False
 
 def jsonify_mongo(data):
