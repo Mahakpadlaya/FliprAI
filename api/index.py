@@ -1,12 +1,26 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from pymongo import MongoClient
-from bson import ObjectId
 import os
 from datetime import datetime
-from PIL import Image
 import base64
 import io
+
+# Lazy imports to prevent crashes
+try:
+    from pymongo import MongoClient
+    from bson import ObjectId
+    PYMONGO_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: pymongo not available: {e}")
+    PYMONGO_AVAILABLE = False
+    ObjectId = None
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: PIL/Pillow not available: {e}")
+    PIL_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)
@@ -41,6 +55,10 @@ _client = None
 def get_db_connection():
     """Lazy MongoDB connection - only connects when needed"""
     global projects_collection, clients_collection, contacts_collection, newsletters_collection, _client
+    
+    if not PYMONGO_AVAILABLE:
+        print("Error: pymongo not available")
+        return False
     
     if projects_collection is not None:
         return True  # Already connected
@@ -133,6 +151,9 @@ def create_project():
         if not all([name, description, image_data]):
             return jsonify({'error': 'Name, description, and image are required'}), 400
         
+        if not PIL_AVAILABLE:
+            return jsonify({'error': 'Image processing not available. Pillow library not installed.'}), 500
+        
         image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
         img = Image.open(io.BytesIO(image_bytes))
         img = img.resize((450, 350), Image.Resampling.LANCZOS)
@@ -170,6 +191,8 @@ def update_project(project_id):
         if data.get('description'):
             update_data['description'] = data['description']
         if data.get('image'):
+            if not PIL_AVAILABLE:
+                return jsonify({'error': 'Image processing not available. Pillow library not installed.'}), 500
             image_data = data['image']
             image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
             img = Image.open(io.BytesIO(image_bytes))
@@ -240,6 +263,9 @@ def create_client():
         if not all([name, description, designation, image_data]):
             return jsonify({'error': 'All fields are required'}), 400
         
+        if not PIL_AVAILABLE:
+            return jsonify({'error': 'Image processing not available. Pillow library not installed.'}), 500
+        
         image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
         img = Image.open(io.BytesIO(image_bytes))
         img = img.resize((150, 150), Image.Resampling.LANCZOS)
@@ -280,6 +306,8 @@ def update_client(client_id):
         if data.get('designation'):
             update_data['designation'] = data['designation']
         if data.get('image'):
+            if not PIL_AVAILABLE:
+                return jsonify({'error': 'Image processing not available. Pillow library not installed.'}), 500
             image_data = data['image']
             image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
             img = Image.open(io.BytesIO(image_bytes))
