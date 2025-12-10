@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
@@ -8,7 +8,7 @@ from PIL import Image
 import base64
 import io
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../public', static_url_path='')
 CORS(app)
 
 # MongoDB Connection
@@ -322,6 +322,26 @@ def delete_newsletter(newsletter_id):
         return jsonify({'message': 'Subscriber deleted successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Serve static files
+@app.route('/')
+def index():
+    return send_file('../public/index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    # Don't serve API routes
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    
+    # Try to serve file from public folder
+    try:
+        if os.path.exists(f'../public/{path}'):
+            return send_from_directory('../public', path)
+        # If file not found, try index.html for SPA routing
+        return send_file('../public/index.html')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
 
 # Export app for Vercel - this is what Vercel Python runtime expects
 # Vercel automatically wraps Flask apps
