@@ -27,8 +27,8 @@ def internal_error(e):
     """Handle 500 errors"""
     return jsonify({'error': 'Internal server error'}), 500
 
-# MongoDB Connection
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+# MongoDB Connection - Lazy initialization to prevent crashes
+MONGODB_URI = os.getenv('MONGODB_URI', '')
 DB_NAME = os.getenv('DB_NAME', 'fullstack-task')
 
 # Initialize collections as None - will be set if connection succeeds
@@ -36,21 +36,37 @@ projects_collection = None
 clients_collection = None
 contacts_collection = None
 newsletters_collection = None
+_client = None
 
-try:
-    if MONGODB_URI and MONGODB_URI != 'mongodb://localhost:27017/':
-        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
-        db = client[DB_NAME]
+def get_db_connection():
+    """Lazy MongoDB connection - only connects when needed"""
+    global projects_collection, clients_collection, contacts_collection, newsletters_collection, _client
+    
+    if projects_collection is not None:
+        return True  # Already connected
+    
+    try:
+        if not MONGODB_URI or MONGODB_URI == '':
+            print("Warning: MONGODB_URI not set")
+            return False
+        
+        _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
+        db = _client[DB_NAME]
         projects_collection = db['projects']
         clients_collection = db['clients']
         contacts_collection = db['contacts']
         newsletters_collection = db['newsletters']
         print("MongoDB connected successfully")
-    else:
-        print("Warning: MONGODB_URI not set or using default")
-except Exception as e:
-    print(f"MongoDB connection error: {e}")
-    # Collections remain None - routes will handle this gracefully
+        return True
+    except Exception as e:
+        print(f"MongoDB connection error: {e}")
+        import traceback
+        print(traceback.format_exc())
+        projects_collection = None
+        clients_collection = None
+        contacts_collection = None
+        newsletters_collection = None
+        return False
 
 def jsonify_mongo(data):
     if isinstance(data, list):
@@ -90,7 +106,7 @@ def get_projects():
 @app.route('/api/projects/<project_id>', methods=['GET'])
 def get_project(project_id):
     try:
-        if not projects_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         project = projects_collection.find_one({'_id': ObjectId(project_id)})
         if not project:
@@ -102,7 +118,7 @@ def get_project(project_id):
 @app.route('/api/projects', methods=['POST'])
 def create_project():
     try:
-        if not projects_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         if not data:
@@ -138,7 +154,7 @@ def create_project():
 @app.route('/api/projects/<project_id>', methods=['PUT'])
 def update_project(project_id):
     try:
-        if not projects_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         project = projects_collection.find_one({'_id': ObjectId(project_id)})
         if not project:
@@ -170,7 +186,7 @@ def update_project(project_id):
 @app.route('/api/projects/<project_id>', methods=['DELETE'])
 def delete_project(project_id):
     try:
-        if not projects_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         result = projects_collection.delete_one({'_id': ObjectId(project_id)})
         if result.deleted_count == 0:
@@ -183,7 +199,7 @@ def delete_project(project_id):
 @app.route('/api/clients', methods=['GET'])
 def get_clients():
     try:
-        if not clients_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         clients = list(clients_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(clients))
@@ -196,7 +212,7 @@ def get_clients():
 @app.route('/api/clients/<client_id>', methods=['GET'])
 def get_client(client_id):
     try:
-        if not clients_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         client = clients_collection.find_one({'_id': ObjectId(client_id)})
         if not client:
@@ -208,7 +224,7 @@ def get_client(client_id):
 @app.route('/api/clients', methods=['POST'])
 def create_client():
     try:
-        if not clients_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         if not data:
@@ -246,7 +262,7 @@ def create_client():
 @app.route('/api/clients/<client_id>', methods=['PUT'])
 def update_client(client_id):
     try:
-        if not clients_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         client = clients_collection.find_one({'_id': ObjectId(client_id)})
         if not client:
@@ -280,7 +296,7 @@ def update_client(client_id):
 @app.route('/api/clients/<client_id>', methods=['DELETE'])
 def delete_client(client_id):
     try:
-        if not clients_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         result = clients_collection.delete_one({'_id': ObjectId(client_id)})
         if result.deleted_count == 0:
@@ -293,7 +309,7 @@ def delete_client(client_id):
 @app.route('/api/contacts', methods=['POST'])
 def create_contact():
     try:
-        if not contacts_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         name = data.get('name')
@@ -321,7 +337,7 @@ def create_contact():
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
     try:
-        if not contacts_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         contacts = list(contacts_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(contacts))
@@ -332,7 +348,7 @@ def get_contacts():
 @app.route('/api/contacts/<contact_id>', methods=['DELETE'])
 def delete_contact(contact_id):
     try:
-        if not contacts_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         result = contacts_collection.delete_one({'_id': ObjectId(contact_id)})
         if result.deleted_count == 0:
@@ -345,7 +361,7 @@ def delete_contact(contact_id):
 @app.route('/api/newsletters', methods=['POST'])
 def subscribe_newsletter():
     try:
-        if not newsletters_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         data = request.json
         email = data.get('email')
@@ -371,7 +387,7 @@ def subscribe_newsletter():
 @app.route('/api/newsletters', methods=['GET'])
 def get_newsletters():
     try:
-        if not newsletters_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected', 'message': 'MongoDB connection failed. Please check MONGODB_URI environment variable.'}), 500
         newsletters = list(newsletters_collection.find().sort('createdAt', -1))
         return jsonify(jsonify_mongo(newsletters))
@@ -382,7 +398,7 @@ def get_newsletters():
 @app.route('/api/newsletters/<newsletter_id>', methods=['DELETE'])
 def delete_newsletter(newsletter_id):
     try:
-        if not newsletters_collection:
+        if not get_db_connection():
             return jsonify({'error': 'Database not connected'}), 500
         result = newsletters_collection.delete_one({'_id': ObjectId(newsletter_id)})
         if result.deleted_count == 0:
