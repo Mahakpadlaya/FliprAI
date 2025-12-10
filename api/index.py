@@ -40,6 +40,7 @@ def get_db_connection():
     global projects_collection, clients_collection, contacts_collection, newsletters_collection, _client
     
     if not PYMONGO_AVAILABLE:
+        print("ERROR: pymongo not available")
         return False
     
     if projects_collection is not None:
@@ -47,52 +48,49 @@ def get_db_connection():
     
     try:
         if not MONGODB_URI or MONGODB_URI == '':
+            print("ERROR: MONGODB_URI is empty")
             return False
         
-        # Fix MongoDB URI to ensure proper SSL/TLS connection
-        # Add retryWrites and other connection options if not present
-        uri = MONGODB_URI
-        if '?' not in uri:
-            uri += '?'
-        else:
-            uri += '&'
+        print(f"Attempting to connect to MongoDB...")
+        print(f"MONGODB_URI exists: {bool(MONGODB_URI)}")
         
-        # Add connection options if not already present
-        if 'retryWrites' not in uri:
-            uri += 'retryWrites=true&'
-        if 'w' not in uri:
-            uri += 'w=majority&'
-        if 'tls' not in uri.lower() and 'ssl' not in uri.lower():
-            uri += 'tls=true&'
-        
-        # Remove trailing & or ?
-        uri = uri.rstrip('&?')
-        
-        # Connect with proper SSL/TLS settings
+        # For MongoDB Atlas, the connection string should already have all options
+        # Just connect directly - MongoDB Atlas URIs are self-contained
         _client = MongoClient(
-            uri,
-            serverSelectionTimeoutMS=10000,
-            connectTimeoutMS=10000,
-            socketTimeoutMS=10000,
-            tlsAllowInvalidCertificates=False,
-            retryWrites=True
+            MONGODB_URI,
+            serverSelectionTimeoutMS=15000,  # Increased timeout
+            connectTimeoutMS=15000,
+            socketTimeoutMS=15000,
+            retryWrites=True,
+            tls=True,
+            tlsAllowInvalidCertificates=False
         )
         
-        # Test connection
+        # Test connection with ping
+        print("Testing MongoDB connection...")
         _client.admin.command('ping')
+        print("MongoDB ping successful!")
         
+        # Get database
         db = _client[DB_NAME]
         projects_collection = db['projects']
         clients_collection = db['clients']
         contacts_collection = db['contacts']
         newsletters_collection = db['newsletters']
         
-        print("MongoDB connected successfully")
+        print(f"MongoDB connected successfully to database: {DB_NAME}")
         return True
     except Exception as e:
-        print(f"MongoDB connection error: {e}")
+        print(f"MongoDB connection error: {str(e)}")
+        print(f"Error type: {type(e).__name__}")
         import traceback
-        print(traceback.format_exc())
+        traceback.print_exc()
+        # Reset collections on failure
+        projects_collection = None
+        clients_collection = None
+        contacts_collection = None
+        newsletters_collection = None
+        _client = None
         return False
 
 def jsonify_mongo(data):
