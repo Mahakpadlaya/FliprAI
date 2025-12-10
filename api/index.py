@@ -439,5 +439,9 @@ def delete_newsletter(newsletter_id):
 
 # Export handler for Vercel
 # Vercel Python runtime automatically wraps Flask apps
-# Simply export the app - Vercel handles the rest
+# Export the app - Vercel handles the rest
 handler = app
+
+# Alternative: If above doesn't work, uncomment this:
+# def handler(request):
+#     return app(request.environ, lambda status, headers: None)
